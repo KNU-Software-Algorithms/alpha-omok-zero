@@ -225,7 +225,7 @@ def self_play(n_game):
         print('=' * 20, " {}  Game End  ".format(blw+whw+drw), '=' * 20)
         stats = (
             'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
-                blw, whw, drw, blw/(blw+whw)*100 if blw+whw != 0 else 0))
+                blw, whw, drw, blw/(blw+whw+0.5*drw)*100))
         print('memory size:', len(Memory))
         print(stats, '\n')
 
