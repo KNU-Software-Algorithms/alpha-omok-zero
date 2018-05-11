@@ -155,7 +155,7 @@ class MCTS:
         if key == self.root_key:
             noise = random.dirichlet(0.15 * ones(len(legal_action)))
             for i, action in enumerate(legal_action):
-                prob[action] = noise[i]
+                prob[action] = 0.75 * prob[action] + 0.25 * noise[i]
         total_N = edges.sum(0)[N]
         # black's pucb
         if self.board[COLOR][0] == WHITE:
@@ -177,7 +177,6 @@ LEN_GAME = 0
 
 def self_play(n_game):
     global LEN_GAME
-    result = {'Black': 0, 'White': 0, 'Draw': 0}
     for g in range(n_game):
         print('#' * (BOARD_SIZE - 4),
               ' GAME: {} '.format(g + 1),
@@ -212,11 +211,11 @@ def self_play(n_game):
             move += 1
         if done:
             if z == 1:
-                result['Black'] += 1
+                Result['Black'] += 1
             elif z == -1:
-                result['White'] += 1
+                Result['White'] += 1
             else:
-                result['Draw'] += 1
+                Result['Draw'] += 1
 
             for i in range(len(samples)):
                 Memory.appendleft(
@@ -227,10 +226,11 @@ def self_play(n_game):
         # result
         print('')
         print('=' * 20, " {}  Game End  ".format(g + 1), '=' * 20)
-        blw, whw, drw = result['Black'], result['White'], result['Draw']
+        blw, whw, drw = Result['Black'], Result['White'], Result['Draw']
         stats = (
             'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
                 blw, whw, drw, blw/(blw+whw)*100 if blw+whw != 0 else 0))
+        print('memory size:', len(Memory))
         print(stats, '\n')
 
 
@@ -292,6 +292,7 @@ if __name__ == '__main__':
     Memory = deque(maxlen=5120)
     Env = OmokEnv(BOARD_SIZE, HISTORY)
     Agent = MCTS(N_BLOCK, CHANNEL, BOARD_SIZE, HISTORY, N_SIMUL)
+    Result = {'Black': 0, 'White': 0, 'Draw': 0}
 
     if use_cuda:
         Agent.model.cuda()
