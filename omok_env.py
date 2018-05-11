@@ -7,6 +7,7 @@ OPPONENT = 1
 COLOR = 2
 BLACK = 1
 WHITE = 0
+WIN_STONE = 3
 COLOR_DICT = {1: 'Black', 0: 'White'}
 ALPHABET = 'A B C D E F G H I J K L M N O'
 
@@ -67,15 +68,16 @@ class OmokEnv:
                 self.board_size, self.board_size), self.display)
 
     def _check_win(self, board, display=True):
-        current_grid = np.zeros((5, 5))
-        for row in range(self.board_size - 5 + 1):
-            for col in range(self.board_size - 5 + 1):
-                current_grid = board[row: row + 5, col: col + 5]
+        current_grid = np.zeros((WIN_STONE, WIN_STONE))
+        for row in range(self.board_size - WIN_STONE + 1):
+            for col in range(self.board_size - WIN_STONE + 1):
+                current_grid = board[row: row +
+                                     WIN_STONE, col: col + WIN_STONE]
                 sum_horizontal = np.sum(current_grid, axis=1)
                 sum_vertical = np.sum(current_grid, axis=0)
                 sum_diagonal_1 = np.sum(current_grid.diagonal())
                 sum_diagonal_2 = np.sum(np.flipud(current_grid).diagonal())
-                if 5 in sum_horizontal or 5 in sum_vertical:
+                if WIN_STONE in sum_horizontal or WIN_STONE in sum_vertical:
                     done = True
                     color = self.board[COLOR][0]
                     if color == BLACK:
@@ -86,7 +88,7 @@ class OmokEnv:
                         print('\n#########   {} Win!   #########'.format(
                             COLOR_DICT[color]))
                     return self.state, self.board, reward, done
-                if sum_diagonal_1 == 5 or sum_diagonal_2 == 5:
+                if sum_diagonal_1 == WIN_STONE or sum_diagonal_2 == WIN_STONE:
                     reward = 1
                     done = True
                     color = self.board[COLOR][0]
