@@ -224,9 +224,9 @@ def self_play(n_game):
             Env.render()
             Agent.reset_tree()
         # result
-        print('')
-        print('=' * 20, " {}  Game End  ".format(g + 1), '=' * 20)
         blw, whw, drw = Result['Black'], Result['White'], Result['Draw']
+        print('')
+        print('=' * 20, " {}  Game End  ".format(blw+whw+drw), '=' * 20)
         stats = (
             'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
                 blw, whw, drw, blw/(blw+whw)*100 if blw+whw != 0 else 0))
