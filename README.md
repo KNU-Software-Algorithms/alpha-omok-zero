@@ -1,2 +1,2 @@
-Omok-Alpha-Zero
+AlphaOmok Zero
 ================
