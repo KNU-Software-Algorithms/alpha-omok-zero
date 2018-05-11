@@ -235,7 +235,7 @@ STEPS = 0
 
 def train(n_epoch):
     global STEPS
-    print('=' * 20, 'Start Learning', '=' * 20,)
+    print('=' * 20, ' Start Learning ', '=' * 20,)
 
     dataloader = DataLoader(Memory,
                             batch_size=BATCH_SIZE,
