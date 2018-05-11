@@ -18,11 +18,11 @@ OPPONENT = 1
 COLOR = 2
 BLACK = 1
 WHITE = 0
-N_BLOCK = 10
+N_BLOCK = 5
 CHANNEL = 128
-BOARD_SIZE = 9
+BOARD_SIZE = 3
 HISTORY = 2
-N_SIMUL = 400
+N_SIMUL = 100
 N_GAME = 1
 N_EPOCH = 1
 N_ITER = 100000
@@ -172,9 +172,6 @@ class MCTS:
         return pucb
 
 
-LEN_GAME = 0
-
-
 def self_play(n_game):
     global LEN_GAME
     for g in range(n_game):
@@ -300,9 +297,9 @@ if __name__ == '__main__':
     for i in range(N_ITER):
         self_play(N_GAME)
 
-        if LEN_GAME == 5120:
+        if len(Memory) == 5120:
             train(N_EPOCH)
+            Memory.clear()
             torch.save(
                 Agent.model.state_dict(),
                 '{}_step_model.pickle'.format(STEPS))
-            LEN_GAME = 0
