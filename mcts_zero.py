@@ -26,6 +26,7 @@ N_SIMUL = 100
 N_GAME = 1
 N_EPOCH = 1
 N_ITER = 100000
+TAU_THRES = 2
 BATCH_SIZE = 16
 LR = 2e-5
 L2 = 1e-4
@@ -173,7 +174,6 @@ class MCTS:
 
 
 def self_play(n_game):
-    global LEN_GAME
     for g in range(n_game):
         print('#' * (BOARD_SIZE - 4),
               ' GAME: {} '.format(g + 1),
@@ -184,9 +184,8 @@ def self_play(n_game):
         done = False
         move = 0
         while not done:
-            LEN_GAME += 1
             Env.render()
-            if move < 8:
+            if move < TAU_THRES:
                 tau = 1
             else:
                 tau = 0
@@ -236,8 +235,7 @@ STEPS = 0
 
 def train(n_epoch):
     global STEPS
-    print('memory size:', len(Memory))
-    print('learning rate:', LR)
+    print('=' * 20, 'Start Learning', '=' * 20,)
 
     dataloader = DataLoader(Memory,
                             batch_size=BATCH_SIZE,
