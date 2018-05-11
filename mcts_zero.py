@@ -298,6 +298,7 @@ if __name__ == '__main__':
         if len(Memory) == 5120:
             train(N_EPOCH)
             Memory.clear()
+            Result = {'Black': 0, 'White': 0, 'Draw': 0}
             torch.save(
                 Agent.model.state_dict(),
                 '{}_step_model.pickle'.format(STEPS))
