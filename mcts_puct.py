@@ -167,12 +167,12 @@ def play():
             env.render()
             mcts.reset_tree()
         # result
-        print('')
-        print('=' * 20, " {}  Game End  ".format(g + 1), '=' * 20)
         blw, whw, drw = result['Black'], result['White'], result['Draw']
+        print('')
+        print('=' * 20, " {}  Game End  ".format(blw+whw+drw), '=' * 20)
         stats = (
-            'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:0.2f}%'.format(
-                blw, whw, drw, blw/(blw+whw)*100 if blw+whw != 0 else 0))
+            'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
+                blw, whw, drw, blw+0.5*drw/(blw+whw+drw)*100))
         print(stats, '\n')
 
 
