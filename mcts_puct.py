@@ -172,7 +172,7 @@ def play():
         print('=' * 20, " {}  Game End  ".format(blw+whw+drw), '=' * 20)
         stats = (
             'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
-                blw, whw, drw, blw+0.5*drw/(blw+whw+drw)*100))
+                blw, whw, drw, (blw+0.5*drw)/(blw+whw+drw)*100))
         print(stats, '\n')
 
 
