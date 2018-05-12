@@ -28,7 +28,7 @@ N_EPOCH = 1
 N_ITER = 100000
 TAU_THRES = 2
 BATCH_SIZE = 16
-LR = 2e-5
+LR = 2e-3
 L2 = 1e-4
 
 
@@ -230,11 +230,8 @@ def self_play(n_game):
         print(stats, '\n')
 
 
-STEPS = 0
-
-
 def train(n_epoch):
-    global STEPS
+    global Steps
     print('=' * 20, ' Start Learning ', '=' * 20,)
 
     dataloader = DataLoader(Memory,
@@ -270,10 +267,10 @@ def train(n_epoch):
             loss.backward()
             optimizer.step()
             running_loss += loss.data[0]
-            STEPS += 1
+            Steps += 1
 
             print('{:3} step loss: {:.3f}'.format(
-                STEPS, running_loss / (i + 1)))
+                Steps, running_loss / (i + 1)))
 
 
 if __name__ == '__main__':
@@ -288,11 +285,13 @@ if __name__ == '__main__':
     Env = OmokEnv(BOARD_SIZE, HISTORY)
     Agent = MCTS(N_BLOCK, CHANNEL, BOARD_SIZE, HISTORY, N_SIMUL)
     Result = {'Black': 0, 'White': 0, 'Draw': 0}
+    Steps = 0
     model_path = False
 
     if model_path:
         print('load model: {}\n'.format(model_path))
         Agent.model.load_state_dict(torch.load(model_path))
+        Steps = False
 
     if use_cuda:
         Agent.model.cuda()
@@ -306,4 +305,4 @@ if __name__ == '__main__':
             Result = {'Black': 0, 'White': 0, 'Draw': 0}
             torch.save(
                 Agent.model.state_dict(),
-                '{}_step_model.pickle'.format(STEPS))
+                '{}_step_model.pickle'.format(Steps))
