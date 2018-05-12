@@ -288,6 +288,11 @@ if __name__ == '__main__':
     Env = OmokEnv(BOARD_SIZE, HISTORY)
     Agent = MCTS(N_BLOCK, CHANNEL, BOARD_SIZE, HISTORY, N_SIMUL)
     Result = {'Black': 0, 'White': 0, 'Draw': 0}
+    model_path = False
+
+    if model_path:
+        print('load model: {}\n'.format(model_path))
+        Agent.model.load_state_dict(torch.load(model_path))
 
     if use_cuda:
         Agent.model.cuda()
