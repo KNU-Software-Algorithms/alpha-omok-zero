@@ -1,16 +1,9 @@
 from __future__ import print_function
 from omok_env import OmokEnv
-from mcts_uct import MCTS
-import numpy as np
+from mcts_zero import MCTS
+import torch
 
-N, Q = 0, 1
-CURRENT = 0
-OPPONENT = 1
-COLOR = 2
-BLACK = 1
-WHITE = 0
-BOARD_SIZE = 9
-HISTORY = 8
+
 COLUMN = {"a": 0, "b": 1, "c": 2,
           "d": 3, "e": 4, "f": 5,
           "g": 6, "h": 7, "i": 8,
@@ -21,18 +14,22 @@ COLUMN = {"a": 0, "b": 1, "c": 2,
           "G": 6, "H": 7, "I": 8,
           "J": 9, "K": 10, "L": 11,
           "M": 12, "N": 13, "O": 14}
-THINK_TIME = 600
-GAME = 1
+N_BLOCK = 5
+CHANNEL = 8
+BOARD_SIZE = 3
+HISTORY = 2
+N_SIMUL = 100
+N_GAME = 5
 
 
 class HumanAgent:
     def get_action(self):
-        laskt_str = str(BOARD_SIZE)
+        last_str = str(BOARD_SIZE)
         for k, v in COLUMN.items():
             if v == BOARD_SIZE - 1:
-                laskt_str += k
+                last_str += k
                 break
-        move_target = str(input('1a ~ {}: '.format(laskt_str)))
+        move_target = str(input('1a ~ {}: '.format(last_str)))
         row = int(move_target[:1]) - 1
         col = COLUMN[move_target[1:2]]
         action = row * BOARD_SIZE + col
@@ -42,21 +39,28 @@ class HumanAgent:
 class HumanUI:
     def __init__(self):
         self.human = HumanAgent()
-        self.ai = MCTS(BOARD_SIZE, HISTORY, THINK_TIME)
+        self.ai = MCTS(N_BLOCK, CHANNEL, BOARD_SIZE, HISTORY, N_SIMUL, 'test')
 
     def get_action(self, state, board, idx):
         if idx % 2 == 0:
             action = self.human.get_action()
         else:
-            action = self.ai.get_action(state, board)
+            action, pi = self.ai.get_action(state, board, tau=0)
         return action
 
 
 def play():
     env = OmokEnv(BOARD_SIZE, HISTORY)
     manager = HumanUI()
-    result = {-1: 0, 0: 0, 1: 0}
-    for g in range(GAME):
+
+    model_path = '960_step_model.pickle'
+    if model_path:
+        print('load model: {}\n'.format(model_path))
+        manager.ai.model.cuda()
+        manager.ai.model.load_state_dict(torch.load(model_path))
+
+    result = {'Black': 0, 'White': 0, 'Draw': 0}
+    for g in range(N_GAME):
         print('##########   Game: {}   ##########'.format(g + 1))
         state, board = env.reset()
         done = False
@@ -83,7 +87,7 @@ def play():
         print('=' * 20, " {}  Game End  ".format(blw+whw+drw), '=' * 20)
         stats = (
             'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
-                blw, whw, drw, blw+0.5*drw/(blw+whw+drw)*100))
+                blw, whw, drw, (blw+0.5*drw)/(blw+whw+drw)*100))
         print(stats, '\n')
 
 

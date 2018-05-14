@@ -1,5 +1,4 @@
 from torch import nn
-from torch.nn import init
 import torch.nn.functional as F
 
 
@@ -80,12 +79,12 @@ class PVNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                init.kaiming_normal(m.weight.data)
+                nn.init.kaiming_normal(m.weight.data)
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
             elif isinstance(m, nn.Linear):
-                init.xavier_uniform(m.weight)
+                nn.init.xavier_uniform(m.weight)
                 m.bias.data.zero_()
 
     def _make_layer(self, block, planes, n_block):
