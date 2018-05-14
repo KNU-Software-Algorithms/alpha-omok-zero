@@ -43,9 +43,9 @@ class HumanUI:
 
     def get_action(self, state, board, idx):
         if idx % 2 == 0:
-            action = self.human.get_action()
-        else:
             action, pi = self.ai.get_action(state, board, tau=0)
+        else:
+            action = self.human.get_action()
         return action
 
 

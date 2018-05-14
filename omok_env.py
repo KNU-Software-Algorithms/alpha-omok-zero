@@ -7,7 +7,7 @@ OPPONENT = 1
 COLOR = 2
 BLACK = 1
 WHITE = 0
-WIN_STONE = 3
+WIN_STONE = 5
 COLOR_DICT = {1: 'Black', 0: 'White'}
 ALPHABET = 'A B C D E F G H I J K L M N O'
 

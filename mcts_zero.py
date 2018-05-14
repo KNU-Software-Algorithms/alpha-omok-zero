@@ -17,22 +17,21 @@ OPPONENT = 1
 COLOR = 2
 BLACK = 1
 WHITE = 0
-N_BLOCK = 5
-CHANNEL = 8
-BOARD_SIZE = 3
+N_BLOCK = 10
+CHANNEL = 64
+BOARD_SIZE = 9
 HISTORY = 2
-N_SIMUL = 100
-N_GAME = 1
+N_SIMUL = 400
 N_EPOCH = 2
 N_ITER = 100000
 TAU_THRES = 2
-BATCH_SIZE = 32
-LR = 1e-3
+BATCH_SIZE = 16
+LR = 2e-4
 L2 = 1e-4
 
-use_cuda = torch.cuda.is_available()
-print('cuda:', use_cuda)
-Tensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
+USE_CUDA = torch.cuda.is_available()
+print('CUDA:', USE_CUDA)
+TENSOR = torch.cuda.FloatTensor if USE_CUDA else torch.FloatTensor
 
 
 class MCTS:
@@ -131,7 +130,8 @@ class MCTS:
     def _expansion(self, key, state):
         edges = self.tree[key]
         state_input = Variable(
-            Tensor([state.reshape(HISTORY * 2 + 1, self.board_size, self.board_size)]))
+            TENSOR([state.reshape(
+                HISTORY * 2 + 1, self.board_size, self.board_size)]))
         prior, value = self.model(state_input)
         edges[:, P] = prior.data.cpu().numpy()[0]
         done = True
@@ -177,74 +177,73 @@ class MCTS:
         return pucb
 
 
-def self_play(n_game):
-    for g in range(n_game):
-        print('#' * (BOARD_SIZE - 4),
-              ' GAME: {} '.format(g + 1),
-              '#' * (BOARD_SIZE - 4))
-        # reset state
-        samples = []
-        state, board = Env.reset()
-        done = False
-        move = 0
-        while not done:
-            Env.render()
-            if move < TAU_THRES:
-                tau = 1
-            else:
-                tau = 0
-            # start simulations
-            action, pi = Agent.get_action(state, board, tau)
-            # print state evaluation
-            state = state.reshape(HISTORY * 2 + 1, BOARD_SIZE, BOARD_SIZE)
-            state_input = Variable(Tensor([state]))
-            prob, value = Agent.model(state_input)
-            print('\nprob')
-            print(
-                prob.data.cpu().numpy()[0].reshape(
-                    BOARD_SIZE, BOARD_SIZE).round(decimals=2))
-            print('\nvalue')
-            print(value.data.cpu().numpy()[0].round(decimals=4))
-            # collect samples
-            samples.append((state, pi))
-            state, board, z, done = Env.step(action)
-            move += 1
-        if done:
-            if z == 1:
-                Result['Black'] += 1
-            elif z == -1:
-                Result['White'] += 1
-            else:
-                Result['Draw'] += 1
+def self_play(iter):
+    print('#' * (BOARD_SIZE - 4),
+          ' GAME: {} '.format(iter + 1),
+          '#' * (BOARD_SIZE - 4))
+    # reset state
+    samples = []
+    state, board = ENV.reset()
+    done = False
+    move = 0
+    while not done:
+        ENV.render()
+        if move < TAU_THRES:
+            tau = 1
+        else:
+            tau = 0
+        # start simulations
+        action, pi = AGENT.get_action(state, board, tau)
+        # print state evaluation
+        state = state.reshape(HISTORY * 2 + 1, BOARD_SIZE, BOARD_SIZE)
+        state_input = Variable(TENSOR([state]))
+        prob, value = AGENT.model(state_input)
+        print('\nprob')
+        print(
+            prob.data.cpu().numpy()[0].reshape(
+                BOARD_SIZE, BOARD_SIZE).round(decimals=2))
+        print('\nvalue')
+        print(value.data.cpu().numpy()[0].round(decimals=4))
+        # collect samples
+        samples.append((state, pi))
+        state, board, z, done = ENV.step(action)
+        move += 1
+    if done:
+        if z == 1:
+            RESULT['Black'] += 1
+        elif z == -1:
+            RESULT['White'] += 1
+        else:
+            RESULT['Draw'] += 1
 
-            for i in range(len(samples)):
-                Memory.appendleft(
-                    (samples[i][0], samples[i][1], z))
-            # render & reset tree
-            Env.render()
-            Agent.reset_tree()
-        # result
-        blw, whw, drw = Result['Black'], Result['White'], Result['Draw']
-        print('')
-        print('=' * 20, " {}  Game End  ".format(blw + whw + drw), '=' * 20)
-        stats = (
-            'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
-                blw, whw, drw, (blw + 0.5 * drw) / (blw + whw + drw) * 100))
-        print('memory size:', len(Memory))
-        print(stats, '\n')
+        for i in range(len(samples)):
+            MEMORY.appendleft(
+                (samples[i][0], samples[i][1], z))
+        # render & reset tree
+        ENV.render()
+        AGENT.reset_tree()
+    # result
+    blw, whw, drw = RESULT['Black'], RESULT['White'], RESULT['Draw']
+    print('')
+    print('=' * 20, " {}  Game End  ".format(iter + 1), '=' * 20)
+    stats = (
+        'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
+            blw, whw, drw, (blw + 0.5 * drw) / (blw + whw + drw) * 100))
+    print('memory size:', len(MEMORY))
+    print(stats, '\n')
 
 
 def train(n_epoch):
-    global Steps
+    global STEPS
     print('=' * 20, ' Start Learning ', '=' * 20,)
 
-    dataloader = DataLoader(Memory,
+    dataloader = DataLoader(MEMORY,
                             batch_size=BATCH_SIZE,
                             shuffle=True,
                             drop_last=True,
-                            pin_memory=use_cuda)
+                            pin_memory=USE_CUDA)
 
-    optimizer = optim.SGD(Agent.model.parameters(),
+    optimizer = optim.SGD(AGENT.model.parameters(),
                           lr=LR,
                           momentum=0.9,
                           weight_decay=L2)
@@ -253,7 +252,7 @@ def train(n_epoch):
         running_loss = 0.
 
         for i, (s, pi, z) in enumerate(dataloader):
-            if use_cuda:
+            if USE_CUDA:
                 s_batch = Variable(s.float()).cuda()
                 pi_batch = Variable(pi.float()).cuda()
                 z_batch = Variable(z.float()).cuda()
@@ -262,7 +261,7 @@ def train(n_epoch):
                 pi_batch = Variable(pi.float())
                 z_batch = Variable(z.float())
 
-            p_batch, v_batch = Agent.model(s_batch)
+            p_batch, v_batch = AGENT.model(s_batch)
 
             loss = F.mse_loss(v_batch, z_batch) + \
                 torch.mean(torch.sum(-pi_batch * torch.log(p_batch), 1))
@@ -271,10 +270,10 @@ def train(n_epoch):
             loss.backward()
             optimizer.step()
             running_loss += loss.data[0]
-            Steps += 1
+            STEPS += 1
 
             print('{:3} step loss: {:.3f}'.format(
-                Steps, running_loss / (i + 1)))
+                STEPS, running_loss / (i + 1)))
 
 
 if __name__ == '__main__':
@@ -282,31 +281,28 @@ if __name__ == '__main__':
     # np.random.seed(0)
     # torch.manual_seed(0)
     # torch.cuda.manual_seed_all(0)
-    use_cuda = torch.cuda.is_available()
-    print('cuda:', use_cuda)
-    Tensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
-    Memory = deque(maxlen=5120)
-    Env = OmokEnv(BOARD_SIZE, HISTORY)
-    Agent = MCTS(N_BLOCK, CHANNEL, BOARD_SIZE, HISTORY, N_SIMUL, 'learn')
-    Result = {'Black': 0, 'White': 0, 'Draw': 0}
-    Steps = 0
+    MEMORY = deque(maxlen=16384)
+    ENV = OmokEnv(BOARD_SIZE, HISTORY)
+    AGENT = MCTS(N_BLOCK, CHANNEL, BOARD_SIZE, HISTORY, N_SIMUL, 'learn')
+    RESULT = {'Black': 0, 'White': 0, 'Draw': 0}
+    STEPS = 0
     model_path = False
 
     if model_path:
         print('load model: {}\n'.format(model_path))
-        Agent.model.load_state_dict(torch.load(model_path))
-        Steps = False
+        AGENT.model.load_state_dict(torch.load(model_path))
+        SETPS = False
 
-    if use_cuda:
-        Agent.model.cuda()
+    if USE_CUDA:
+        AGENT.model.cuda()
 
-    for i in range(N_ITER):
-        self_play(N_GAME)
+    for iter in range(N_ITER):
+        self_play(iter)
 
-        if len(Memory) == 5120:
+        if len(MEMORY) == 16384:
             train(N_EPOCH)
-            Memory.clear()
-            Result = {'Black': 0, 'White': 0, 'Draw': 0}
+            MEMORY.clear()
+            RESULT = {'Black': 0, 'White': 0, 'Draw': 0}
             torch.save(
-                Agent.model.state_dict(),
-                '{}_step_model.pickle'.format(Steps))
+                AGENT.model.state_dict(),
+                '{}_step_model.pickle'.format(STEPS))

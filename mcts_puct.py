@@ -12,7 +12,7 @@ OPPONENT = 1
 COLOR = 2
 BLACK = 1
 WHITE = 0
-BOARD_SIZE = 3
+BOARD_SIZE = 9
 HISTORY = 2
 N_SIMUL = 400
 GAME = 30
@@ -113,7 +113,7 @@ class MCTS:
 
     def _get_pucb(self, edges, c_pucb):
         legal_move, no_legal_loc = self._get_legal_move(self.board)
-        prior = 1/len(legal_move)
+        prior = 1 / len(legal_move)
         total_N = edges.sum(0)[N]
         # black's pucb
         if self.board[COLOR][0] == WHITE:
@@ -169,10 +169,10 @@ def play():
         # result
         blw, whw, drw = result['Black'], result['White'], result['Draw']
         print('')
-        print('=' * 20, " {}  Game End  ".format(blw+whw+drw), '=' * 20)
+        print('=' * 20, " {}  Game End  ".format(blw + whw + drw), '=' * 20)
         stats = (
             'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
-                blw, whw, drw, (blw+0.5*drw)/(blw+whw+drw)*100))
+                blw, whw, drw, (blw + 0.5 * drw) / (blw + whw + drw) * 100))
         print(stats, '\n')
 
 

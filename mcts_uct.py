@@ -13,16 +13,16 @@ COLOR = 2
 BLACK = 1
 WHITE = 0
 BOARD_SIZE = 9
-HISTORY = 8
-THINK_TIME = 100
-GAME = 20
+HISTORY = 2
+N_SIMUL = 400
+GAME = 30
 
 
 class MCTS:
-    def __init__(self, board_size, n_history, think_time):
+    def __init__(self, board_size, n_history, n_simul):
         self.env_simul = OmokEnv(board_size, n_history, display=False)
         self.board_size = board_size
-        self.think_time = think_time
+        self.n_simul = n_simul
         self.tree = None
         self.root = None
         self.state = None
@@ -67,16 +67,15 @@ class MCTS:
     def _simulation(self, state):
         start = time.time()
         finish = 0
-        sim = 0
-        while True:
-            sim += 1
-            sys.stdout.write('simulation: {}\r'.format(sim))
+        for sim in range(self.n_simul):
+            print('\rsimulation: {}'.format(sim + 1), end='')
             sys.stdout.flush()
             # reset state
             self.state, self.board = self.env_simul.reset(state)
             done = False
             n_selection = 0
             n_expansion = 0
+
             while not done:
                 board_fill = self.board[CURRENT] + self.board[OPPONENT]
                 self.legal_move = np.argwhere(board_fill == 0).flatten()
@@ -105,8 +104,8 @@ class MCTS:
                 self._backup(reward, n_selection + n_expansion)
                 self._reset()
                 finish = time.time() - start
-                if finish >= self.think_time:
-                    break
+                # if finish >= self.think_time:
+                # break
         print('\n{} simulation end ({:0.0f}s)'.format(sim, finish))
 
     def _selection(self, key, c_ucb):
@@ -167,7 +166,7 @@ class MCTS:
 
 def play():
     env = OmokEnv(BOARD_SIZE, HISTORY)
-    mcts = MCTS(BOARD_SIZE, HISTORY, THINK_TIME)
+    mcts = MCTS(BOARD_SIZE, HISTORY, N_SIMUL)
     result = {'Black': 0, 'White': 0, 'Draw': 0}
     for g in range(GAME):
         print('#' * (BOARD_SIZE - 4),
@@ -194,10 +193,10 @@ def play():
         # result
         blw, whw, drw = result['Black'], result['White'], result['Draw']
         print('')
-        print('=' * 20, " {}  Game End  ".format(blw+whw+drw), '=' * 20)
+        print('=' * 20, " {}  Game End  ".format(blw + whw + drw), '=' * 20)
         stats = (
             'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
-                blw, whw, drw, (blw+0.5*drw)/(blw+whw+drw)*100))
+                blw, whw, drw, (blw + 0.5 * drw) / (blw + whw + drw) * 100))
         print(stats, '\n')
 
 
