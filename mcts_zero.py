@@ -20,13 +20,13 @@ WHITE = 0
 N_BLOCK = 10
 CHANNEL = 64
 BOARD_SIZE = 9
-HISTORY = 2
+HISTORY = 8
 N_SIMUL = 400
-N_EPOCH = 2
-N_ITER = 100000
-TAU_THRES = 2
-BATCH_SIZE = 16
-LR = 2e-4
+N_EPOCH = 4
+N_ITER = 1000000
+TAU_THRES = 8
+BATCH_SIZE = 32
+LR = 2e-3
 L2 = 1e-4
 
 USE_CUDA = torch.cuda.is_available()
@@ -133,6 +133,7 @@ class MCTS:
             TENSOR([state.reshape(
                 HISTORY * 2 + 1, self.board_size, self.board_size)]))
         prior, value = self.model(state_input)
+        prior = prior.exp() / prior.exp().sum()
         edges[:, P] = prior.data.cpu().numpy()[0]
         done = True
         return value.data.cpu().numpy()[0], done
@@ -158,28 +159,28 @@ class MCTS:
         no_legal_loc, legal_action = self._get_no_legal_loc(self.board)
         prob = edges[:, P]
         if key == self.root_key and self.mode == 'learn':
-            noise = np.random.dirichlet(0.15 * np.ones(len(legal_action)))
+            noise = np.random.dirichlet(0.2 * np.ones(len(legal_action)))
             for i, action in enumerate(legal_action):
                 prob[action] = 0.75 * prob[action] + 0.25 * noise[i]
         total_N = edges.sum(0)[N]
         # black's pucb
         if self.board[COLOR][0] == WHITE:
-            no_legal_loc *= -999999
+            no_legal_loc *= -9999999
             pucb = edges[:, Q] + \
                 c_pucb * prob * np.sqrt(total_N) / (edges[:, N] + 1) + \
                 no_legal_loc
         # white's pucb
         else:
-            no_legal_loc *= 999999
+            no_legal_loc *= 9999999
             pucb = edges[:, Q] - \
                 c_pucb * prob * np.sqrt(total_N) / (edges[:, N] + 1) + \
                 no_legal_loc
         return pucb
 
 
-def self_play(iter):
+def self_play(idx):
     print('#' * (BOARD_SIZE - 4),
-          ' GAME: {} '.format(iter + 1),
+          ' GAME: {} '.format(idx + 1),
           '#' * (BOARD_SIZE - 4))
     # reset state
     samples = []
@@ -198,6 +199,7 @@ def self_play(iter):
         state = state.reshape(HISTORY * 2 + 1, BOARD_SIZE, BOARD_SIZE)
         state_input = Variable(TENSOR([state]))
         prob, value = AGENT.model(state_input)
+        prob = prob.exp() / prob.exp().sum()
         print('\nprob')
         print(
             prob.data.cpu().numpy()[0].reshape(
@@ -262,9 +264,10 @@ def train(n_epoch):
                 z_batch = Variable(z.float())
 
             p_batch, v_batch = AGENT.model(s_batch)
+            p_batch = p_batch.exp() / p_batch.exp().sum()
 
             loss = F.mse_loss(v_batch, z_batch) + \
-                torch.mean(torch.sum(-pi_batch * torch.log(p_batch), 1))
+                torch.mean(torch.sum(-pi_batch * p_batch.log(), 1))
 
             optimizer.zero_grad()
             loss.backward()
@@ -278,10 +281,10 @@ def train(n_epoch):
 
 if __name__ == '__main__':
     np.set_printoptions(suppress=True)
-    # np.random.seed(0)
-    # torch.manual_seed(0)
-    # torch.cuda.manual_seed_all(0)
-    MEMORY = deque(maxlen=16384)
+    np.random.seed(0)
+    torch.manual_seed(0)
+    torch.cuda.manual_seed_all(0)
+    MEMORY = deque(maxlen=8000)
     ENV = OmokEnv(BOARD_SIZE, HISTORY)
     AGENT = MCTS(N_BLOCK, CHANNEL, BOARD_SIZE, HISTORY, N_SIMUL, 'learn')
     RESULT = {'Black': 0, 'White': 0, 'Draw': 0}
@@ -296,10 +299,10 @@ if __name__ == '__main__':
     if USE_CUDA:
         AGENT.model.cuda()
 
-    for iter in range(N_ITER):
-        self_play(iter)
+    for idx in range(N_ITER):
+        self_play(idx)
 
-        if len(MEMORY) == 16384:
+        if len(MEMORY) == 8000:
             train(N_EPOCH)
             MEMORY.clear()
             RESULT = {'Black': 0, 'White': 0, 'Draw': 0}

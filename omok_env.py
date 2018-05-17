@@ -85,7 +85,7 @@ class OmokEnv:
                     else:
                         reward = -1
                     if display:
-                        print('\n#########   {} Win!   #########'.format(
+                        print('\n#####   {} Win!   #####'.format(
                             COLOR_DICT[color]))
                     return self.state, self.board, reward, done
                 if sum_diagonal_1 == WIN_STONE or sum_diagonal_2 == WIN_STONE:
@@ -97,14 +97,14 @@ class OmokEnv:
                     else:
                         reward = -1
                     if display:
-                        print('\n#########   {} Win!   #########'.format(
+                        print('\n#####   {} Win!   #####'.format(
                             COLOR_DICT[color]))
                     return self.state, self.board, reward, done
         if np.sum(self.board_fill) == self.board_size**2 - 1:
             reward = 0
             done = True
             if display:
-                print('\n#########     Draw!     #########')
+                print('\n#####   Draw!   #####')
             return self.state, self.board, reward, done
         else:  # continue
             reward = 0

@@ -42,8 +42,8 @@ class PolicyHead(nn.Module):
         out = F.relu(out, inplace=True)
         out = out.view(out.size(0), -1)
         out = self.policy_fc(out)
-        out = F.log_softmax(out, dim=1)
-        out = out.exp()
+        # out = F.log_softmax(out, dim=1)
+        # out = out.exp()
         return out
 
 
@@ -79,7 +79,7 @@ class PVNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight.data)
+                nn.init.kaiming_uniform_(m.weight.data)
             elif isinstance(m, nn.BatchNorm2d):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
