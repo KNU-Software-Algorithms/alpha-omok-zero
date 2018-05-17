@@ -41,6 +41,7 @@ class MCTS:
         self.board_size = board_size
         self.n_simul = n_simul
         self.mode = mode
+        self.alpha = 10 / board_size**2
         self.tree = None
         self.root = None
         self.root_key = None
@@ -159,7 +160,8 @@ class MCTS:
         no_legal_loc, legal_action = self._get_no_legal_loc(self.board)
         prob = edges[:, P]
         if key == self.root_key and self.mode == 'learn':
-            noise = np.random.dirichlet(0.2 * np.ones(len(legal_action)))
+            noise = np.random.dirichlet(
+                self.alpha * np.ones(len(legal_action)))
             for i, action in enumerate(legal_action):
                 prob[action] = 0.75 * prob[action] + 0.25 * noise[i]
         total_N = edges.sum(0)[N]
