@@ -111,8 +111,8 @@ class MCTS:
             print(visit.reshape(self.board_size, self.board_size).round())
             action = np.argwhere(visit == visit.max()).flatten()
             action = action[np.random.choice(len(action))]
-            pi = np.exp(visit) / np.exp(visit).sum()
-            # pi = visit / visit.sum()
+            # pi = np.exp(visit) / np.exp(visit).sum()
+            pi = visit / visit.sum()
             print('\npi')
             print(pi.reshape(
                 self.board_size, self.board_size).round(decimals=2))
@@ -165,13 +165,13 @@ class MCTS:
         total_N = edges.sum(0)[N]
         # black's pucb
         if self.board[COLOR][0] == WHITE:
-            no_legal_loc *= -9999999
+            no_legal_loc *= -99999999
             pucb = edges[:, Q] + \
                 c_pucb * prob * np.sqrt(total_N) / (edges[:, N] + 1) + \
                 no_legal_loc
         # white's pucb
         else:
-            no_legal_loc *= 9999999
+            no_legal_loc *= 99999999
             pucb = edges[:, Q] - \
                 c_pucb * prob * np.sqrt(total_N) / (edges[:, N] + 1) + \
                 no_legal_loc
@@ -227,7 +227,7 @@ def self_play(idx):
     # result
     blw, whw, drw = RESULT['Black'], RESULT['White'], RESULT['Draw']
     print('')
-    print('=' * 20, " {}  Game End  ".format(iter + 1), '=' * 20)
+    print('=' * 20, " {}  Game End  ".format(idx + 1), '=' * 20)
     stats = (
         'Black Win: {}  White Win: {}  Draw: {}  Winrate: {:.2f}%'.format(
             blw, whw, drw, (blw + 0.5 * drw) / (blw + whw + drw) * 100))
@@ -289,7 +289,7 @@ if __name__ == '__main__':
     AGENT = MCTS(N_BLOCK, CHANNEL, BOARD_SIZE, HISTORY, N_SIMUL, 'learn')
     RESULT = {'Black': 0, 'White': 0, 'Draw': 0}
     STEPS = 0
-    model_path = False
+    model_path = '8192_step_model.pickle'
 
     if model_path:
         print('load model: {}\n'.format(model_path))
